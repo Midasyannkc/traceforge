@@ -56,5 +56,25 @@ def consume_naive(client, shard_id, *, max_polls=3, poll_limit=10):
     return consumed
 
 
+def consume_fixed(client, shard_id, *, poll_limit=200, max_iterations=1000):
+    """
+    FIX: batched reads with a larger Limit, looping until the shard
+    reports it is caught up (MillisBehindLatest == 0) or the iterator
+    exhausts, so a burst within a single run is fully drained rather than
+    cut off by an arbitrary iteration count.
+    """
+    it = client.get_shard_iterator(
+        StreamName=STREAM_NAME, ShardId=shard_id, ShardIteratorType="TRIM_HORIZON"
+    )["ShardIterator"]
+    consumed = []
+    for _ in range(max_iterations):
+        resp = client.get_records(ShardIterator=it, Limit=poll_limit)
+        consumed.extend(resp["Records"])
+        it = resp["NextShardIterator"]
+        if resp["MillisBehindLatest"] == 0 and not resp["Records"]:
+            break
+    return consumed
+
+
 def new_client(region_name="us-east-1"):
     return boto3.client("kinesis", region_name=region_name)
