@@ -59,3 +59,13 @@ def naive_drift_check(recent_window_events):
     psi = compute_psi(baseline, comparison)
     return {"psi": psi, "drift_detected": psi > PSI_DRIFT_THRESHOLD}
 
+
+def fixed_drift_check(frozen_baseline_events, current_window_events):
+    """
+    FIX: always compares against a frozen baseline captured once, during
+    the known-good operating period, never re-derived from recent data.
+    """
+    baseline = [e["latency_ms"] for e in frozen_baseline_events]
+    comparison = [e["latency_ms"] for e in current_window_events]
+    psi = compute_psi(baseline, comparison)
+    return {"psi": psi, "drift_detected": psi > PSI_DRIFT_THRESHOLD}
