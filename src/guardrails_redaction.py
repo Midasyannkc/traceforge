@@ -20,6 +20,9 @@ def redact_naive(text):
     return NAIVE_PHONE_PATTERN.sub(REDACTED, text)
 
 
+def redact_fixed(text):
+    return FIXED_PHONE_PATTERN.sub(REDACTED, text)
+
 
 def scan_events_for_leaked_pii(events, redact_fn):
     """Returns the events whose output_text still contains an unredacted
